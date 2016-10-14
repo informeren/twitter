@@ -1,0 +1,5 @@
+name = Custom Feed Import Filters
+description = Custom filters for the module feed import
+core = 7.x
+package = Information
+

@@ -1,0 +1,203 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function custom_filters_menu() {
+  $items = array();
+  $items['wordcount/%/%'] = array(
+    'title' => 'Count words',
+    'description' => 'Sort all words',
+    'page callback' => 'custom_filters_wordcount',
+    'page arguments' => array(1, 2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function custom_filters_match($regex, $content) {
+  $match = array();
+  preg_match($regex, $content, $match);
+  array_shift($match);
+  return implode(' ', $match);
+}
+
+function custom_filters_replace($regex, $replace, $content) {
+  $content = preg_replace($regex, $replace, $content);
+  return $content;
+}
+
+function custom_filters_file_match($regex_src, $regex_file, $content) {
+  $src = custom_filters_match($regex_src, $content);
+  $file = file_get_contents($src);
+  $filename = custom_filters_match($regex_file, $content);
+  $file_saved = file_save_data($file, 'public://' . $filename, FILE_EXISTS_REPLACE);
+  $file_array = (array) $file_saved;
+  return array('fid' => $file_saved);
+}
+
+function custom_filters_wordcount($twitter_profile, $filter_words) {
+  $filters = preg_split('/\s*,\s*/', $filter_words);
+  $query = new EntityFieldQuery();
+  $query = $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'article')
+    ->fieldCondition('field_twitter_profile', 'value', $twitter_profile, '=');
+  foreach ($filters as $filter) {
+    $query->fieldCondition('body', 'value', '%' . $filter . '%', 'LIKE');
+  }
+  $result = $query->execute();
+
+  $count = array();
+  if (isset($result['node'])) {
+    $nids = array_keys($result['node']);
+    while ($nids) {
+      $load_nids = array_splice($nids, 0, 100);
+
+      $nodes = node_load_multiple($load_nids);
+      foreach ($nodes as $node) {
+        $wrapper = entity_metadata_wrapper('node', $node);
+        $body = preg_replace(array('/<[^>]+>/', '/[,\.:\'!?]/'), array(
+          '',
+          ''
+        ), $wrapper->body->value()['value']);
+        $words = preg_split('/\s+/', $body);
+        foreach ($words as $word) {
+          if (!custom_filters_remove_word($word)) {
+            $word_lowercase = mb_strtolower($word);
+            if (!isset($count[$word_lowercase])) {
+              $count[$word_lowercase] = 1;
+            }
+            else {
+              $count[$word_lowercase]++;
+            }
+          }
+        }
+      }
+    }
+    if (isset($_GET['order']) && isset($_GET['sort'])) {
+      if ($_GET['order'] == 'Count') {
+        if ($_GET['sort'] == 'asc') {
+          asort($count);
+        }
+        elseif ($_GET['sort'] == 'desc') {
+          arsort($count);
+        }
+      }
+      elseif ($_GET['order'] == 'Word') {
+        if ($_GET['sort'] == 'asc') {
+          ksort($count);
+        }
+        elseif ($_GET['sort'] == 'desc') {
+          krsort($count);
+        }
+      }
+    }
+  }
+  drupal_set_title('Wordcount for "' . check_plain($twitter_profile) . '" with search terms: "' . implode('", "', $filters) . '"');
+
+  $word_row = array();
+
+  foreach ($count as $key => $number) {
+    $word_row[] = array($key, $number);
+  }
+
+  $header = array(
+    array(
+      'data' => 'Word',
+      'field' => 'word',
+    ),
+    array(
+      'data' => 'Count',
+      'field' => 'count',
+      'sort' => 'DESC',
+    )
+  );
+
+  return theme('table', array('header' => $header, 'rows' => $word_row));
+}
+
+function custom_filters_remove_word($word) {
+  $remove_words = array(
+    '&',
+    '&amp;',
+    'a',
+    'all',
+    'am',
+    'an',
+    'and',
+    'are',
+    'as',
+    'at',
+    'be',
+    'by',
+    'can',
+    'did',
+    'didnt',
+    'do',
+    'dont',
+    'for',
+    'from',
+    'get',
+    'got',
+    'had',
+    'has',
+    'have',
+    'he',
+    'her',
+    'his',
+    'i',
+    'if',
+    'in',
+    'is',
+    'isnt',
+    'it',
+    'just',
+    'me',
+    'my',
+    'no',
+    'not',
+    'of',
+    'on',
+    'one',
+    'or',
+    'our',
+    'out',
+    'put',
+    'said',
+    'see',
+    'she',
+    'so',
+    'than',
+    'thank',
+    'that',
+    'the',
+    'the',
+    'their',
+    'them',
+    'then',
+    'there',
+    'they',
+    'this',
+    'those',
+    'to',
+    'up',
+    'want',
+    'was',
+    'we',
+    'well',
+    'what',
+    'when',
+    'who',
+    'why',
+    'will',
+    'with',
+    'you',
+  );
+  if (in_array(mb_strtolower($word), $remove_words)) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
