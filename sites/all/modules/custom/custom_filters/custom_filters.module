@@ -5,11 +5,19 @@
  */
 function custom_filters_menu() {
   $items = array();
-  $items['wordcount/%/%'] = array(
+  $items['wordcount/%'] = array(
     'title' => 'Count words',
     'description' => 'Sort all words',
     'page callback' => 'custom_filters_wordcount',
     'page arguments' => array(1, 2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['wordcount/%/%'] = array(
+    'title' => 'Count words',
+    'description' => 'Sort all words with search terms',
+    'page callback' => 'custom_filters_wordcount',
+    'page arguments' => array(1),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -37,7 +45,20 @@ function custom_filters_file_match($regex_src, $regex_file, $content) {
   return array('fid' => $file_saved);
 }
 
-function custom_filters_wordcount($twitter_profile, $filter_words) {
+/**
+ * Make table of words and the number each word appears from twitter profile.
+ *
+ * Optional filter for specific words.
+ *
+ * @param string $twitter_profile
+ *   Twitter profile username (e.g. @HillaryClinton).
+ * @param string $filter_words
+ *   Words separated by comma ",", e.g. "trumps,crooked".
+ *
+ * @return string
+ *   Return themed table with words and number of appearances.
+ */
+function custom_filters_wordcount($twitter_profile, $filter_words = '') {
   $filters = preg_split('/\s*,\s*/', $filter_words);
   $query = new EntityFieldQuery();
   $query = $query->entityCondition('entity_type', 'node')
@@ -59,7 +80,7 @@ function custom_filters_wordcount($twitter_profile, $filter_words) {
         $wrapper = entity_metadata_wrapper('node', $node);
         $body = preg_replace(array('/<[^>]+>/', '/[,\.:\'"!\?’-]/'), array(
           '',
-          ''
+          '',
         ), $wrapper->body->value()['value']);
         $words = preg_split('/\s+/', $body);
         foreach ($words as $word) {
@@ -111,7 +132,7 @@ function custom_filters_wordcount($twitter_profile, $filter_words) {
       'data' => 'Count',
       'field' => 'count',
       'sort' => 'DESC',
-    )
+    ),
   );
 
   return theme('table', array('header' => $header, 'rows' => $word_row));
