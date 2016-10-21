@@ -81,12 +81,11 @@ function custom_filters_wordcount($twitter_profile, $filter_words = '') {
         $body = preg_replace(array(
           '/<[^>]+>/',
           '/[,\.:\'"!\?’-]/',
-          '/https?\/\/\S+/',
         ), array(
           ' ',
           ' ',
-          ' ',
         ), $wrapper->body->value()['value']);
+        $body = preg_replace('/https?\/\/\S+/', ' ', $body);
         $words = preg_split('/\s+/', $body);
         foreach ($words as $word) {
           if (!custom_filters_remove_word($word)) {
