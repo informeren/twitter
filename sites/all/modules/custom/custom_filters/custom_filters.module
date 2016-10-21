@@ -79,13 +79,16 @@ function custom_filters_wordcount($twitter_profile, $filter_words = '') {
       foreach ($nodes as $node) {
         $wrapper = entity_metadata_wrapper('node', $node);
         $body = preg_replace(array(
+          '/<a [^>]+>[^<]+<\/a>/',
           '/<[^>]+>/',
           '/[,\.:\'"!\?’-]/',
         ), array(
           ' ',
           ' ',
+          '',
         ), $wrapper->body->value()['value']);
         $body = preg_replace('/https?\/\/\S+/', ' ', $body);
+        $body = trimp($body);
         $words = preg_split('/\s+/', $body);
         foreach ($words as $word) {
           if (!custom_filters_remove_word($word)) {
