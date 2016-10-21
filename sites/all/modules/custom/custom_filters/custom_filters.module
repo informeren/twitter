@@ -88,7 +88,7 @@ function custom_filters_wordcount($twitter_profile, $filter_words = '') {
           '',
         ), $wrapper->body->value()['value']);
         $body = preg_replace('/https?\/\/\S+/', ' ', $body);
-        $body = trimp($body);
+        $body = trim($body);
         $words = preg_split('/\s+/', $body);
         foreach ($words as $word) {
           if (!custom_filters_remove_word($word)) {
