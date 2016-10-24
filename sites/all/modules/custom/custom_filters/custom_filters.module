@@ -121,6 +121,9 @@ function custom_filters_wordcount($twitter_profile, $filter_words = '') {
         }
       }
     }
+    else {
+      arsort($count);
+    }
   }
   drupal_set_title('Wordcount for "' . check_plain($twitter_profile) . '" with search terms: "' . implode('", "', $filters) . '"');
 
@@ -138,7 +141,7 @@ function custom_filters_wordcount($twitter_profile, $filter_words = '') {
     array(
       'data' => 'Count',
       'field' => 'count',
-      'sort' => 'DESC',
+      'sort' => 'desc',
     ),
   );
 
