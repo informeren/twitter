@@ -9,7 +9,7 @@ function custom_filters_menu() {
     'title' => 'Count words',
     'description' => 'Sort all words',
     'page callback' => 'custom_filters_wordcount',
-    'page arguments' => array(1, 2),
+    'page arguments' => array(1),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -17,7 +17,7 @@ function custom_filters_menu() {
     'title' => 'Count words',
     'description' => 'Sort all words with search terms',
     'page callback' => 'custom_filters_wordcount',
-    'page arguments' => array(1),
+    'page arguments' => array(1, 2),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
